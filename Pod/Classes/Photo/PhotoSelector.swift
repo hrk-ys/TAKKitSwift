@@ -25,10 +25,13 @@ final public class PhotoSelector: NSObject {
   public typealias SuccessCallback = (UIImage?) -> Void
   public typealias FailureCallback = (Error) -> Void
   
+  private var allowsEditing: Bool = false
   private var success: SuccessCallback?
   private var failure: FailureCallback?
   
+  
   public func launchPhotoLibrary(allowsEditing: Bool, success: SuccessCallback, failure: FailureCallback? = nil) {
+    self.allowsEditing = allowsEditing
     self.success = success
     self.failure = failure
     
@@ -94,6 +97,7 @@ private extension PhotoSelector {
 
 private extension PhotoSelector {
   private func launchCamera(cameraDevice: UIImagePickerControllerCameraDevice, allowsEditing: Bool, success: SuccessCallback, failure: FailureCallback? = nil) {
+    self.allowsEditing = allowsEditing
     self.success = success
     self.failure = failure
     
@@ -161,15 +165,19 @@ private extension PhotoSelector {
 // privateにできない…
 extension PhotoSelector: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
   public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+    
+    let key = allowsEditing ? UIImagePickerControllerEditedImage : UIImagePickerControllerOriginalImage
+    let image = info[key] as? UIImage
+    
     if let w = UIApplication.sharedApplication().delegate?.window, window = w, top = window.tak_topViewController() {
       top.dismissViewControllerAnimated(true, completion: { [weak self] in
-        self?.success?(info[UIImagePickerControllerOriginalImage] as? UIImage)
+        self?.success?(image)
         })
       
       return
     }
     
-    success?(info[UIImagePickerControllerOriginalImage] as? UIImage)
+    success?(image)
   }
   
   public func imagePickerControllerDidCancel(picker: UIImagePickerController) {
